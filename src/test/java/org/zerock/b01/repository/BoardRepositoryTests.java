@@ -154,7 +154,7 @@ public class BoardRepositoryTests {
     // 검색 조건과 목록 처리 테스트 2 - PageImpl
     @Test
     public void searchAll2Test(){
-        
+
         String[] types = {"t", "c", "w"};
 
         String keyword = "1";
