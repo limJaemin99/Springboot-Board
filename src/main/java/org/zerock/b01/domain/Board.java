@@ -9,7 +9,7 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class Board {
+public class Board extends BaseEntity{
     /*
         JPA를 이용하는 개발의 핵심은 [객체지향을 통해서 영속 계층을 처리]하는데 있다.
         따라서 데이터에 해당하는 객체를 엔티티 객체라는 것으로 다루고, JPA로 이를 데이터베이스와 연동해서 관리한다.
