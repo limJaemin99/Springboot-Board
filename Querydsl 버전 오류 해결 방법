@@ -1,0 +1,36 @@
+▶ Gradle 버전과 IntelliJ IDE 업데이트로 인해 Querydsl의 Gradle 플러그인이 버전 호환성 문제를 일으키는 경우가 발생함.
+
+● 문제 상황
+    - Gradle 5.0 이상 및 IntelliJ 2020.x 버전을 사용하는 경우, Gradle로 프로젝트를 빌드할 때
+        '동일한 Q파일을 생성하지 말라'는 에러 메시지가 나타나며, 배포 작업에서 문제가 발생한다.
+
+● 문제 해결 방법
+    - 기존의 Querydsl 플러그인을 사용한 Gradle 설정을 수정해야 한다.
+        com.ewerk.gradle.plugins.querydsl 플러그인을 사용하지 않도록 변경해야 한다.
+
+        ▶ dependencies{}에 아래 내용 추가
+        /*
+            //Querydsl Setting
+            implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+            annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+            annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+            annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+        */
+
+        ▶ build.gradle 파일 하단에 아래 내용 추가
+        /*
+            // QueryDsl 빌드 옵션 (선택)
+            def querydslDir = "$buildDir/generated/querydsl"
+
+            sourceSets {
+             main.java.srcDirs += [ querydslDir ]
+            }
+
+            tasks.withType(JavaCompile) {
+             options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
+            }
+
+            clean.doLast {
+             file(querydslDir).deleteDir()
+            }
+        */
