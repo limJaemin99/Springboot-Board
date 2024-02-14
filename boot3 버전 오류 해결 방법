@@ -1,0 +1,66 @@
+▶ Gradle 버전과 IntelliJ IDE 업데이트로 인해 Querydsl의 Gradle 플러그인이 버전 호환성 문제를 일으키는 경우가 발생함.
+
+● 문제 상황
+    - Gradle 5.0 이상 및 IntelliJ 2020.x 버전을 사용하는 경우, Gradle로 프로젝트를 빌드할 때
+        '동일한 Q파일을 생성하지 말라'는 에러 메시지가 나타나며, 배포 작업에서 문제가 발생한다.
+
+● 문제 해결 방법
+    - 기존의 Querydsl 플러그인을 사용한 Gradle 설정을 수정해야 한다.
+        com.ewerk.gradle.plugins.querydsl 플러그인을 사용하지 않도록 변경해야 한다.
+
+        ▶ dependencies{}에 아래 내용 추가
+        /*
+            //Querydsl Setting
+            implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+            annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+            annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+            annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+        */
+
+        ▶ build.gradle 파일 하단에 아래 내용 추가
+        /*
+            // QueryDsl 빌드 옵션 (선택)
+            def querydslDir = "$buildDir/generated/querydsl"
+
+            sourceSets {
+             main.java.srcDirs += [ querydslDir ]
+            }
+
+            tasks.withType(JavaCompile) {
+             options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
+            }
+
+            clean.doLast {
+             file(querydslDir).deleteDir()
+            }
+        */
+
+---------------------------------------------------------------------------
+
+▶ boot3 버전에서 Swagger UI 3 버전을 지원하지 않는 오류
+
+● 문제 상황
+    - Swagger UI 3 버전을 다음과 같이 dependency 추가하였다.
+        {
+            implementation 'io.springfox:springfox-boot-starter:3.0.0'
+            implementation 'io.springfox:springfox-swagger-ui:3.0.0'
+        }
+        그러나 [No endpoint GET /swagger-ui/index.html.] 오류가 발생하였다.
+        boot3 버전에서는 더 이상 springfox 를 지원하지 않으므로 발생하는 문제이다.
+
+
+● 문제 해결 방법
+    - springfox 대신 springdoc-openapi 를 사용한다.
+        springdoc 라이브러리가 OpenAPI3.0 스펙에 맞는 JSON을 만들어주면, Swagger UI가 화면을 만들어서 JSON들을 띄워주는 역할을 한다.
+        * springdoc-openapi-ui 는 swagger-ui 를 포함하고 있다.
+            ** swagger-ui : 핵심 로직 구현
+            ** springdoc-openapi : swagger-ui 를 추상화하여 더 잘 활용할 수 있게 해주는 라이브러리
+
+        ▶ dependencies{}에 아래 내용 추가
+            implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+
+        ▶ config/SwaggerConfig.java 파일에 내용 작성
+            - 파일 참고
+
+★ SwaggerConfig.java 파일을 따로 설정하지 않아도 Swagger UI 사용이 가능하므로 여기서는 SwaggerConfig 설정을 따로 하지 않았음
+    비동기 방식을 사용할 컨트롤러에 @RestController를 추가해야 Swagger UI 에서 사용 가능
