@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/basic.html}">
+<head>
+    <title>Board Modify</title>
+</head>
+
+<div layout:fragment="content">
+    <div class="row mt-3">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    Board Modify
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/board/modify}" method="post" id="f1">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Bno</span>
+                            <input type="text" class="form-control" th:value="${dto.bno}" name="bno" readonly>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Title</span>
+                            <input type="text" class="form-control" th:value="${dto.title}" name="title">
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Content</span>
+                            <textarea class="form-control col-sm-5" rows="5" style="resize: none" name="content">[[${dto.content}]]</textarea>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Writer</span>
+                            <input type="text" class="form-control" th:value="${dto.writer}" name="writer" readonly>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">RegDate</span>
+                            <input type="text" class="form-control" th:value="${#temporals.format(dto.RegDate, 'yyyy-MM-dd HH:mm:ss')}" readonly>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">ModDate</span>
+                            <input type="text" class="form-control" th:value="${#temporals.format(dto.modDate, 'yyyy-MM-dd HH:mm:ss')}" readonly>
+                        </div>
+
+                        <div class="my-4">
+                            <div class="float-end">
+                                <button type="button" class="btn btn-primary listBtn">List</button>
+                                <button type="button" class="btn btn-secondary modBtn">Modify</button>
+                                <button type="button" class="btn btn-danger removeBtn">Remove</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>  <!-- end card-body -->
+            </div>  <!-- end card -->
+        </div>  <!-- end col -->
+    </div>  <!-- end row -->
+
+    <!-- modal -->
+    <div class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">[[${dto.bno}]]번 게시글</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>삭제한 게시글은 복구할 수 없습니다.</p>
+                    <p>삭제하시겠습니까?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger removeAction" data-bs-dismiss="modal">삭제</button>
+                    <!--<button type="button" class="btn btn-primary">Save changes</button>-->
+                </div>
+            </div>
+        </div>
+    </div>  <!-- end modal -->
+
+</div>
+
+<script layout:fragment="script" th:inline="javascript">
+
+    //수정 실패
+    const errors = [[${errors}]]
+    console.log(errors)
+
+    let errorMsg = '⚠️수정 실패⚠️\n️'
+
+    if(errors){
+        for (let i = 0; i < errors.length; i++){
+            let eField = `${errors[i].field}`
+            let eCode = `${errors[i].code}`
+
+            switch (eField) {
+                case 'title' : eField = '제목은';
+                    break;
+                case 'content' : eField = '내용은';
+                    break;
+                case 'writer' : eField = '작성자는';
+                    break;
+            }
+
+            switch (eCode){
+                case 'NotEmpty' : eCode = '공백이 될 수 없습니다.';
+                    break;
+                case 'Size' : eCode = '3글자 이상, 100글자 이하로 작성해야 합니다.'
+                    break;
+            }
+
+            errorMsg += (i+1)+'. '+eField+' '+eCode+'\n'
+        }
+        history.replaceState({}, null, null)
+        alert(errorMsg)
+    }
+
+
+    //이벤트 처리 - 수정
+    const link = [[${pageRequestDTO.getLink()}]]
+    const formObj = document.querySelector("#f1")
+
+    document.querySelector(".modBtn").addEventListener("click", function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        formObj.action = `/board/modify?${link}`
+        formObj.method = 'post'
+        formObj.submit()
+    }, false)
+
+
+    //이벤트 처리 - 삭제
+    document.querySelector(".removeBtn").addEventListener("click", function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        const modal = new bootstrap.Modal(document.querySelector(".modal"))
+        modal.show()
+    }, false)
+
+
+    //삭제 확인 modal (Y/N)
+    document.querySelector(".removeAction").addEventListener("click", function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        formObj.action = `/board/remove`
+        formObj.method = 'post'
+        formObj.submit()
+    }, false)
+
+
+    //이벤트 처리 - 목록
+    document.querySelector(".listBtn").addEventListener("click", function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        formObj.reset()
+        self.location = `/board/list?${link}`
+    }, false)
+
+</script>
+
+</html>

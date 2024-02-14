@@ -49,11 +49,11 @@
                             </tr>
                         </thead>
 
-                        <tbody>
+                        <tbody th:with="link = ${pageRequestDTO.getLink()}">
                             <tr th:each="dto:${responseDTO.dtoList}">
                                 <th scope="row">[[${dto.bno}]]</th>
                                 <td>
-                                    [[${dto.title}]]
+                                    <a th:href="|@{/board/read(bno=${dto.bno})}&${link}|">[[${dto.title}]]</a>
                                 </td>
                                 <td>[[${dto.writer}]]</td>
                                 <!-- <td>[[${dto.regDate}]]</td> -->
@@ -84,6 +84,26 @@
             </div>  <!-- end card -->
         </div>  <!-- end col -->
     </div>  <!-- end row -->
+
+    <!-- modal -->
+    <div class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="content"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <!--<button type="button" class="btn btn-primary">Save changes</button>-->
+                </div>
+            </div>
+        </div>
+    </div>  <!-- end modal -->
+
 </div>
 
 <script layout:fragment="script" th:inline="javascript">
@@ -115,6 +135,23 @@
 
         self.location = '/board/list'
     }, false)
+
+
+    //등록 성공 - show modal
+    const result = [[${result}]]
+    const modal = new bootstrap.Modal(document.querySelector(".modal"))
+
+    if(result){
+        if(result == 'removed'){
+            document.querySelector(".modal-title").innerHTML = '삭제'
+            document.querySelector("#content").innerHTML = '게시글이 삭제되었습니다.'
+            modal.show()
+        } else {
+            document.querySelector(".modal-title").innerHTML = '등록'
+            document.querySelector("#content").innerHTML = result+'번 게시글이 등록되었습니다.'
+            modal.show()
+        }
+    }
 
 </script>
 
