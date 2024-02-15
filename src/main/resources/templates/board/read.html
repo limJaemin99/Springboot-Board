@@ -60,16 +60,94 @@
         </div>  <!-- end col -->
     </div>  <!-- end row -->
 
-    <!-- modal -->
-    <div class="modal" tabindex="-1">
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <div class="my-4">
+                <button class="btn btn-info addReplyBtn">Add Reply</button>
+            </div>
+            <ul class="list-group replyList">
+            </ul>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col">
+            <ul class="pagination replyPaging">
+            </ul>
+        </div>
+    </div>
+
+    <!-- Axios 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Axios를 이용하는 통신을 처리할 reply.js 파일 -->
+    <script src="/js/reply.js"></script>
+
+
+    <!-- Register modal -->
+    <div class="modal registerModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">수정</h5>
+                    <h5 class="modal-title">Register Reply</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Reply Text</span>
+                        <input type="text" class="form-control replyText">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Replyer</span>
+                        <input type="text" class="form-control replyer">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary registerBtn">Register</button>
+                    <button type="button" class="btn btn-outline-dark closeRegisterBtn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>  <!-- end Register-modal -->
+
+
+    <!-- Modify modal -->
+    <div class="modal modifyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title replyHeader"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Reply Text</span>
+                        <input type="text" class="form-control modifyText">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info modifyBtn">Modify</button>
+                    <button type="button" class="btn btn-danger removeBtn">Remove</button>
+                    <button type="button" class="btn btn-outline-dark closeModifyBtn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>  <!-- end Modify-modal -->
+
+
+    <!-- Notification modal -->
+    <div class="modal notificationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title notifyModalTitle"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="content">수정이 완료되었습니다.</p>
+                    <p class="notifyModalContent"></p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
@@ -77,19 +155,277 @@
                 </div>
             </div>
         </div>
-    </div>  <!-- end modal -->
+    </div>  <!-- end Notification-modal -->
 
-</div>
+</div>  <!-- end layout:fragment -->
 
 <script layout:fragment="script" th:inline="javascript">
 
     //수정 완료 - show modal
     const result = [[${result}]]
-    const modal = new bootstrap.Modal(document.querySelector(".modal"))
+    const notificationModal = new bootstrap.Modal(document.querySelector(".notificationModal"))
+    const notifyModalTitle = document.querySelector(".notifyModalTitle")
+    const notifyModalContent = document.querySelector(".notifyModalContent")
 
     if(result == 'modified'){
-        modal.show()
+        notifyModalTitle.innerHTML = '수정'
+        notifyModalContent.innerHTML = '수정이 완료되었습니다.'
+        notificationModal.show()
     }
+
+
+
+//Axios 사용 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    const bno = [[${dto.bno}]]
+
+    //get1(bno) //① Axios 동작 여부를 Console창에서 확인하기
+                    // Object ▶ data ▶ dtoList ▶ 댓글 목록
+
+    //console.log(get1(bno))  //② 화면에서 결과가 필요한 경우
+                                // Promise ▶ PromiseResult : Object ▶ dtoList ▶ 댓글 목록
+    /*
+        비동기 함수이므로 get1()을 호출한 시점에서는 반환할 것이 없지만
+            나중에 무언가를 반환할 것이므로 [반환하리고 한 '약속'만을 반환한다.]
+
+        만약 비동기 처리되는 결과를 반환해서 처리한다면 [then()] 과 [catch()] 등을 이용해서 작성한다.
+            * reply.js 파일에서는 결과를 반환하도록 구성하고, read.html 파일에서는 then()과 catch()를 이용한다.
+     */
+
+    //Axios 호출해 보기
+    get1(bno).then(data => {
+        console.log(data)
+    }).catch(e => {
+        console.error(e)
+    })
+
+
+    //댓글 목록 처리
+    function printReplies(page, size, goLast){
+        getList({bno, page, size, goLast}).then(
+            data => {
+                //Axios 결과를 가져오면 아래 2가지 함수들에게 전달
+                printList(data.dtoList) //목록 처리
+                printPages(data)        //페이지 처리
+            }
+        ).catch(e => {
+            console.error(e)
+        })
+    }
+
+    //함수 호출
+    //printReplies(1, 10)
+
+    //만약 처음부터 댓글의 마지막 페이지를 보고 싶다면 true를 추가
+    printReplies(1, 10,true)
+
+
+    // ● 댓글 목록 출력 함수
+    const replyList = document.querySelector('.replyList')
+
+    function printList(dtoList){
+        let str = '';
+
+        if(dtoList && dtoList.length > 0){
+            for (const dto of dtoList){
+                str += `<li class="list-group-item d-flex replyItem">
+                            <span class="col-2">${dto.rno}</span>
+                            <span class="col-6" data-rno="${dto.rno}">${dto.replyText}</span>
+                            <span class="col-2">${dto.replyer}</span>
+                            <span class="col-2">${dto.regDate}</span>
+                        </li>`
+            }
+        }
+        replyList.innerHTML = str
+    }
+
+
+    // ● 페이지 목록 출력 함수
+    const replyPaging = document.querySelector('.replyPaging')
+
+    function printPages(data) {
+        //pagination
+        let pageStr = '';
+
+        if(data.prev){
+            pageStr += `<li class="page-item">
+                            <a class="page-link" data-page="${data.start-1}">PREV</a>
+                        </li>`
+        }
+
+        for (let i = data.start; i <= data.end; i++){
+            pageStr += `<li class="page-item ${i == data.page?"active":""}">
+                            <a class="page-link" data-page="${i}">${i}</a>
+                        </li>`
+        }
+
+        if(data.next){
+            pageStr += `<li class="page-item">
+                            <a class="page-link" data-page="${data.end +1}">NEXT</a>
+                        </li>`
+        }
+        replyPaging.innerHTML = pageStr
+    }
+
+
+    //댓글 등록 모달
+    const registerModal = new bootstrap.Modal(document.querySelector(".registerModal"))
+    const addReplyBtn = document.querySelector(".addReplyBtn")
+    const registerBtn = document.querySelector(".registerBtn")
+    const replyText = document.querySelector(".replyText")
+    const replyer = document.querySelector(".replyer")
+    const closeReigsterBtn = document.querySelector(".closeRegisterBtn")
+
+    addReplyBtn.addEventListener("click", function (e) {
+        replyText.value = ''
+        replyer.value = ''
+        registerModal.show()
+    }, false)
+
+    closeReigsterBtn.addEventListener("click", function (e) {
+        registerModal.hide()
+    })
+
+    registerBtn.addEventListener("click", function (e) {
+        const replyObj = {
+            bno:bno,
+            replyText:replyText.value,
+            replyer:replyer.value
+        }
+
+        addReply(replyObj).then(reult => {
+            registerModal.hide()
+
+            notifyModalTitle.innerHTML = '댓글 작성'
+            notifyModalContent.innerHTML = '댓글 작성이 완료되었습니다.'
+            notificationModal.show()
+
+            printReplies(1, 10, true)   //댓글 목록 갱신
+        }).catch(e => {
+            registerModal.hide()
+
+            notifyModalTitle.innerHTML = '⛔오류⛔'
+            notifyModalContent.innerHTML = '⛔ 댓글 작성 도중 오류가 발생했습니다.'
+            notificationModal.show()
+        })
+    }, false)
+
+
+    // ● 댓글 페이지 번호 클릭
+    let page = 1    //페이지 번호
+    let size = 10   //페이지당 사이즈
+
+    replyPaging.addEventListener("click", function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        /*
+            화면에서 페이지 번호를 구성하는 부분은 <li>태그 안의 <a>태그이고, 페이지 번호가 'data-page' 속성값으로 지정되어 있다.
+                페이지 번호는 매번 새롭게 구성되므로 이벤트 처리는 항상 고정되어 있는 <ul>을 대상으로 등록해야 한다.
+         */
+
+        const target = e.target
+
+        if(!target || target.tagName != 'A'){
+            return
+        }
+
+        const pageNum = target.getAttribute("data-page")
+        page = pageNum
+        printReplies(page, size)
+    }, false)
+
+
+    // [모달] 댓글 조회,수정,삭제
+    const modifyModal = new bootstrap.Modal(document.querySelector(".modifyModal"))
+    const replyHeader = document.querySelector(".replyHeader")  //선택한 댓글 번호
+    const modifyText = document.querySelector(".modifyText")    //댓글 내용 수정
+    const modifyBtn = document.querySelector(".modifyBtn")
+    const removeBtn = document.querySelector(".removeBtn")
+    const closeModifyBtn = document.querySelector(".closeModifyBtn")
+
+    replyList.addEventListener("click", function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        const target = e.target
+
+        if(!target || target.tagName != 'SPAN'){
+            return
+        }
+
+        const rno = target.getAttribute("data-rno")
+
+        if(!rno){
+            return
+        }
+
+        getReply(rno).then(reply => {
+            //선택한 댓글의 내용을 모달창에 채워서 보여준다.
+            console.log(reply)
+            replyHeader.innerHTML = reply.rno
+            modifyText.value = reply.replyText
+
+            modifyModal.show()
+        }).catch(e => {
+            notifyModalTitle.innerHTML = '⛔오류⛔'
+            notifyModalContent.innerHTML = '⛔ 댓글을 불러오는 도중 오류가 발생했습니다.'
+            notificationModal.show()
+        })
+    })
+
+
+    //댓글 수정 및 화면 갱신
+    modifyBtn.addEventListener("click", function (e) {
+        const replyObj = {
+            bno:bno,
+            rno:replyHeader.innerHTML,
+            replyText:modifyText.value
+        }
+
+        modifyReply(replyObj).then(result => {
+            modifyModal.hide()
+
+            notifyModalTitle.innerHTML = '댓글 수정'
+            notifyModalContent.innerHTML = '댓글 수정이 완료되었습니다.'
+            notificationModal.show()
+
+            printReplies(page, size)
+        }).catch(e => {
+            modifyModal.hide()
+
+            notifyModalTitle.innerHTML = '⛔오류⛔'
+            notifyModalContent.innerHTML = '⛔ 댓글 수정 도중 오류가 발생했습니다.'
+            notificationModal.show()
+        })
+    }, false)
+
+    closeModifyBtn.addEventListener("click", function (e) {
+        modifyModal.hide()
+    }, false)
+
+
+    //댓글 삭제
+    removeBtn.addEventListener("click", function (e) {
+        removeReply(replyHeader.innerHTML).then(result => {
+            modifyModal.hide()
+
+            notifyModalTitle.innerHTML = '댓글 삭제'
+            notifyModalContent.innerHTML = '댓글이 삭제되었습니다.'
+            notificationModal.show()
+
+            //만약 삭제 후 처음/끝 페이지로 이동시키고 싶다면 page 값을 지정
+            //page = 1
+
+            printReplies(page, size)
+        }).catch(e => {
+            modifyModal.hide()
+
+            notifyModalTitle.innerHTML = '⛔오류⛔'
+            notifyModalContent.innerHTML = '⛔ 댓글 삭제 도중 오류가 발생했습니다.'
+            notificationModal.show()
+        })
+    }, false)
 
 </script>
 
