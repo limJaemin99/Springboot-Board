@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.zerock.b01.dto.BoardListReplyCountDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -174,6 +175,31 @@ public class BoardRepositoryTests {
 
         //prev next
         log.info(result.hasPrevious()+" : "+result.hasNext());
+
+        result.getContent().forEach(board -> log.info(board));
+    }
+
+
+    //특정 게시글의 댓글 갯수 처리 테스트
+    @Test
+    public void searchReplyCountTest(){
+        String[] types = {"t", "c", "w"};
+        String keyword = "6";
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("bno").descending());
+        Page<BoardListReplyCountDTO> result = boardRepository.searchWithReplyCount(types, keyword, pageable);
+
+        //total pages
+        log.info(result.getTotalPages());
+
+        //page size
+        log.info(result.getSize());
+
+        //page Number
+        log.info(result.getNumber());
+
+        //prev next
+        log.info(result.hasPrevious() + " : " + result.hasNext());
 
         result.getContent().forEach(board -> log.info(board));
     }

@@ -3,6 +3,7 @@ package org.zerock.b01.repository.search;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.zerock.b01.domain.Board;
+import org.zerock.b01.dto.BoardListReplyCountDTO;
 
 public interface BoardSearch {
     /*  Querydsl을 기존 코드에 연동하는 방법
@@ -15,4 +16,7 @@ public interface BoardSearch {
     Page<Board> search1(Pageable pageable);
 
     Page<Board> searchAll(String[] types, String keyword, Pageable pageable);
+
+    //댓글 목록 처리 Querydsl
+    Page<BoardListReplyCountDTO> searchWithReplyCount(String[] types, String keyword, Pageable pageable);
 }
