@@ -3,12 +3,15 @@ package org.zerock.b01.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Getter
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "imageSet") //Board에서도 BoardImage에 대한 참조를 가지는 방식으로 구조 변경
 public class Board extends BaseEntity{
     /*
         JPA를 이용하는 개발의 핵심은 [객체지향을 통해서 영속 계층을 처리]하는데 있다.
@@ -48,5 +51,54 @@ public class Board extends BaseEntity{
     public void change(String title, String content){
         this.title = title;
         this.content = content;
+    }
+
+
+    /*
+        @OneToMany는 기본적으로 각 엔티티에 해당하는 테이블을 독립적으로 생성하고, 중간에 매핑해주는 테이블이 생성된다.
+            - board_image, board_image_set 둘 다 생성됨
+
+        위와 같이 엔티티 테이블 사이에 생성되는 테이블을 '매핑 테이블'이라고 하는데,
+            매핑 테이블을 생성하지 않는 방법은 다음과 같다.
+            ① 단방향으로 @OneToMany를 이용하는 경우 @JoinColumn을 이용한다.
+            ② mappedBy 속성을 이용한다.
+                * Board와 BoardImage가 서로 참조를 유지하는 양방향 참조 상황에서 사용하는데
+                    mappedBy는 '어떤 엔티티의 속성으로 매핑되는지'를 의미한다.
+
+        상위 엔티티(Board)와 하위 엔티티(BoardImage)의 연관 관계를 상위 엔티티에서 관리하는 경우 신경써야 하는
+            가장 중요한 점 중에 하나는 [상위 엔티티 객체의 상태가 변경되었을 때 하위 객체들도 같이 영향을 받는다는 점]이다.
+            [JPA에서는 '영속성 전이(cascade)'라고 한다.]
+            cascade의 속성값은 다음과 같다.
+                - PERSIST / REMOVE : 상위 엔티티가 영속 처리될 때 하위 엔티티들도 같이 영속 처리
+                - MERGE / REFRESH / DETACH : 상위 엔티티의 상태가 변경될 때 하위 엔티티들도 같이 상태 변경
+                - ALL : 상위 엔티티의 모든 상태 변경이 하위 엔티티에 적용
+
+        ※ orphanRemoval = true : 하위 엔티티의 참조가 더 이상 없는 상태가 되면 실제로 삭제함
+     */
+    //Board에서도 BoardImage에 대한 참조를 가지는 방식으로 구조 변경
+    @OneToMany(mappedBy = "board",  //BoardImage의 board변수
+                cascade = {CascadeType.ALL},
+                fetch = FetchType.LAZY,
+                orphanRemoval = true)
+    @Builder.Default
+    private Set<BoardImage> imageSet = new HashSet<>();
+
+
+    public void addImage(String uuid, String fileName){
+        BoardImage boardImage = BoardImage.builder()
+                .uuid(uuid)
+                .fileName(fileName)
+                .board(this)
+                .ord(imageSet.size())
+                .build();
+
+        imageSet.add(boardImage);
+    }
+
+
+    public void clearImages(){
+        imageSet.forEach(boardImage -> boardImage.changeBoard(null));
+
+        this.imageSet.clear();
     }
 }

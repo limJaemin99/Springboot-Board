@@ -1,18 +1,22 @@
 package org.zerock.b01.repository;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.Commit;
 import org.zerock.b01.domain.Board;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.zerock.b01.domain.BoardImage;
 import org.zerock.b01.dto.BoardListReplyCountDTO;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Log4j2
@@ -21,6 +25,10 @@ public class BoardRepositoryTests {
 
     @Autowired
     private BoardRepository boardRepository;
+
+    @Autowired
+    private ReplyRepository replyRepository;
+
 
     // insert 기능 테스트 - JpaRepository.save()
     @Test
@@ -203,4 +211,81 @@ public class BoardRepositoryTests {
 
         result.getContent().forEach(board -> log.info(board));
     }
+
+
+    //첨부파일이 있는 게시물 등록
+    @Test
+    public void insertWithImagesTest(){
+        Board board = Board.builder()
+                .title("Image Test")
+                .content("첨부파일 테스트")
+                .writer("tester")
+                .build();
+
+        for (int i = 0; i < 3; i++){
+            board.addImage(UUID.randomUUID().toString(), "file" + i + ".jpg");
+        }
+
+        boardRepository.save(board);
+    }
+
+
+    //Lazy 로딩 확인
+    @Test
+    //@Transactional
+    public void readWithImagesTest(){
+        //반드시 존재하는 bno로 확인
+        //Optional<Board> result = boardRepository.findById(1L);
+        Optional<Board> result = boardRepository.findByIdWithImages(1L);
+
+        Board board = result.orElseThrow();
+
+        log.info(board);
+        log.info("--------------------");
+        //log.info(board.getImageSet());
+        /*  ● 마지막에 오류가 발생하는 이유
+            DB와 연결이 끝난 상태이므로 'no session'이라는 메시지가 뜬다.
+                이 에러를 해결하는 가장 간단한 방법은 @Transactional을 추가하는 것이다.
+                @Transactional 적용시 필요할 때마다 메소드 내에서 추가적인 쿼리를 여러번 실행하는 것이 가능해진다.
+         */
+        for (BoardImage boardImage : board.getImageSet()){
+            log.info(boardImage);
+        }
+    }
+
+
+    //특정 게시물의 첨부파일을 다른 파일들로 수정
+    @Test
+    @Commit
+    @Transactional
+    public void modifyImagesTest(){
+        Optional<Board> result = boardRepository.findByIdWithImages(1L);
+
+        Board board = result.orElseThrow();
+
+        //기존 첨부파일들은 삭제
+        board.clearImages();
+
+        //새로운 첨부파일들
+        for (int i = 0; i < 2; i++){
+            board.addImage(UUID.randomUUID().toString(), "updatefile" + i + ".jpg");
+        }
+
+        boardRepository.save(board);
+    }
+
+
+    //Reply 엔티티 삭제 후 Board 삭제 테스트
+        //게시물 삭제시 해당 게시물을 사용하는 댓글들을 먼저 삭제해야 함
+    @Test
+    @Commit
+    @Transactional
+    public void removeAllTest(){
+        Long bno = 1L;
+
+        replyRepository.deleteByBoard_Bno(bno);
+
+        boardRepository.deleteById(bno);
+    }
+        
 }

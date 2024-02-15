@@ -2,10 +2,13 @@ package org.zerock.b01.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.zerock.b01.domain.Board;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.zerock.b01.repository.search.BoardSearch;
+
+import java.util.Optional;
 
 public interface BoardRepository extends JpaRepository<Board, Long>, BoardSearch {
     /*
@@ -37,4 +40,13 @@ public interface BoardRepository extends JpaRepository<Board, Long>, BoardSearch
 
     @Query(value = "select now()", nativeQuery = true)
     String getTime();
+
+    /*  ● BoardRepositoryTests.java의 readWithImagesTest()를 위함
+        하위 엔티티를 로딩하는 가장 간단한 방법은 즉시(eager)로딩을 적용하는 것이다.
+            하지만 가능한 지연(lazy)로딩을 이용하는 것이 기본적인 방식이므로 조금 특별한 @EntityGraph를 이용한다.
+            지연로딩이지만 한 번에 조인 처리해서 select가 이루어지도록 하는 방법을 이용한다.
+     */
+    @EntityGraph(attributePaths = {"imageSet"})
+    @Query("select b from Board b where b.bno =:bno")
+    Optional<Board> findByIdWithImages(Long bno);
 }
