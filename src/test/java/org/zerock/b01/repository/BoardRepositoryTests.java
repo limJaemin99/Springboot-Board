@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.zerock.b01.domain.BoardImage;
+import org.zerock.b01.dto.BoardListAllDTO;
 import org.zerock.b01.dto.BoardListReplyCountDTO;
 
 import java.util.List;
@@ -287,5 +288,69 @@ public class BoardRepositoryTests {
 
         boardRepository.deleteById(bno);
     }
-        
+
+
+    //N+1 문제 - 테스트를 위한 더미데이터 추가
+    @Test
+    public void insertAllTest(){
+        for (int i = 1; i <= 100; i++){
+            Board board = Board.builder()
+                    .title("Title.."+i)
+                    .content("Content.."+i)
+                    .writer("writer"+i)
+                    .build();
+
+            for (int j = 0; j < 3; j++){
+                if(i % 5 == 0){
+                    continue;
+                }
+
+                board.addImage(UUID.randomUUID().toString(), i + "file" + j + ".jpg");
+            }
+
+            boardRepository.save(board);
+        }
+    }
+
+
+    //N+1 문제 - Board와 Reply를 left join 처리
+    @Test
+    @Transactional
+    public void searchImageReplyCountTest(){
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("bno").descending());
+
+        //① @BatchSize 테스트
+        //boardRepository.searchWithAll(null, null, pageable);
+        /*
+            실행 결과, 목록을 가져오는 쿼리 한 번과 하나의 게시물마다 board_image에 대한 쿼리가 실행된다.
+                이것을 [N+1] 문제라고 한다. (N은 게시물마다 각각 실행되는 쿼리, 1은 목록을 가져오는 쿼리)
+                이 테스트는 다음과 같은 구조로 실행된다.
+                    ① Board에 대한 페이징 처리가 실행되면서 limit으로 처리
+                    ② System.out.println()을 통해 Board의 bno값 출력
+                    ③ Board 객체의 imageSet을 가져오기 위해서 board_image 테이블 조회 쿼리 실행
+                    ④ 2,3번 과정 반복
+
+            * N+1로 실행되는 쿼리는 DB를 엄청나게 많이 사용하기 때문에 문제가 된다.
+                이 문제를 보완하기 위해 @BatchSize를 사용한다.
+                    ▶ Board.java 의 imageSet 부분으로 이동하여 설명
+         */
+
+        /*  ● @BatchSize 적용 후
+            실행 결과, 목록을 처리하는 쿼리가 실행되고 Board 객체의 bno를 출력한다.
+                Board의 imageSet을 출력할 때 @BatchSize가 지정되어 있어, 목록에서 나온 10개의 Board 객체의 bno 값을
+                이용해서 board_image 테이블을 조회한다.
+                BoardImage들이 모두 조회되었으므로 나머지 목록을 처리할 때는 별도의 쿼리가 실행되지 않고 처리된다.
+         */
+
+        //② Querydsl의 튜플 처리 테스트
+        Page<BoardListAllDTO> result = boardRepository.searchWithAll(null, null, pageable);
+
+        log.info("━━━━━━━━━━━━━━━━━━━━");
+        log.info(result.getTotalElements());
+
+        result.getContent().forEach(boardListAllDTO -> log.info(boardListAllDTO));
+
+        //실행 결과, BoardDTO에서 boardImages를 제외한 모든 처리가 완료된 형태로 출력된다.
+    }
+
 }

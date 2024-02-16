@@ -2,6 +2,7 @@ package org.zerock.b01.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -81,7 +82,13 @@ public class Board extends BaseEntity{
                 fetch = FetchType.LAZY,
                 orphanRemoval = true)
     @Builder.Default
+    @BatchSize(size = 20)
     private Set<BoardImage> imageSet = new HashSet<>();
+    /*  ● @BatchSize
+            @BatchSize에는 size라는 속성이 있는데, 이를 이용해서 'N번'에 해당하는 쿼리를 모아서 한번에 실행한다. (in 조건)
+                여기서는 size 속성값만큼 BoardImage를 조회할 때 한번에 in 조건으로 사용된다.
+                * in 조건은 조건의 범위를 지정하는데 사용되며, 지정된 값 중에서 하나 이상과 일치하면 조건에 맞는 것으로 처리한다.
+    */
 
 
     public void addImage(String uuid, String fileName){

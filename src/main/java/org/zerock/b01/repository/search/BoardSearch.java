@@ -3,6 +3,7 @@ package org.zerock.b01.repository.search;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.zerock.b01.domain.Board;
+import org.zerock.b01.dto.BoardListAllDTO;
 import org.zerock.b01.dto.BoardListReplyCountDTO;
 
 public interface BoardSearch {
@@ -19,4 +20,10 @@ public interface BoardSearch {
 
     //댓글 목록 처리 Querydsl
     Page<BoardListReplyCountDTO> searchWithReplyCount(String[] types, String keyword, Pageable pageable);
+
+    //N+1 문제 - Board와 Reply를 left join 처리
+    //Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, Pageable pageable);
+
+    //게시글의 이미지와 댓글의 숫자까지 처리
+    Page<BoardListAllDTO> searchWithAll(String[] types, String keyword, Pageable pageable);
 }

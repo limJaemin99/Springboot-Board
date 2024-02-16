@@ -8,10 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.zerock.b01.domain.Board;
-import org.zerock.b01.dto.BoardDTO;
-import org.zerock.b01.dto.BoardListReplyCountDTO;
-import org.zerock.b01.dto.PageRequestDTO;
-import org.zerock.b01.dto.PageResponseDTO;
+import org.zerock.b01.dto.*;
 import org.zerock.b01.repository.BoardRepository;
 
 import java.util.List;
@@ -28,27 +25,37 @@ public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
 
+
     //등록
     @Override
     public Long register(BoardDTO boardDTO){
-        Board board = modelMapper.map(boardDTO, Board.class);
+        //Board board = modelMapper.map(boardDTO, Board.class);
+
+        //DTO를 엔티티로 변환
+        Board board = dtoToEntity(boardDTO);
 
         Long bno = boardRepository.save(board).getBno();
 
         return bno;
     }
 
+
     //조회
     @Override
     public BoardDTO readOne(Long bno) {
-        Optional<Board> result = boardRepository.findById(bno);
+        //Optional<Board> result = boardRepository.findById(bno);
+
+        //board_image까지 조인 처리되는 findByWithImages()를 이용
+        Optional<Board> result = boardRepository.findByIdWithImages(bno);
 
         Board board = result.orElseThrow();
 
-        BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+        //BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+        BoardDTO boardDTO = entityToDTO(board);
 
         return boardDTO;
     }
+
 
     //수정
     @Override
@@ -59,14 +66,26 @@ public class BoardServiceImpl implements BoardService {
 
         board.change(boardDTO.getTitle(), boardDTO.getContent());
 
+        //첨부파일의 처리
+        board.clearImages();
+
+        if(boardDTO.getFileNames() != null){
+            for (String fileName : boardDTO.getFileNames()){
+                String[] arr = fileName.split("_");
+                board.addImage(arr[0], arr[1]);
+            }
+        }
+
         boardRepository.save(board);
     }
+
 
     //삭제
     @Override
     public void remove(Long bno) {
         boardRepository.deleteById(bno);
     }
+
 
     //목록 및 검색 기능
     @Override
@@ -88,6 +107,7 @@ public class BoardServiceImpl implements BoardService {
                 .build();
     }
 
+
     //댓글의 숫자까지 처리
     @Override
     public PageResponseDTO<BoardListReplyCountDTO> listWithReplyCount(PageRequestDTO pageRequestDTO) {
@@ -103,4 +123,23 @@ public class BoardServiceImpl implements BoardService {
                 .total((int)result.getTotalElements())
                 .build();
     }
+
+
+    //게시글의 이미지와 댓글의 숫자까지 처리
+    @Override
+    public PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO) {
+        String[] types = pageRequestDTO.getTypes();
+        String keyword = pageRequestDTO.getKeyword();
+        Pageable pageable = pageRequestDTO.getPageable("bno");
+
+        Page<BoardListAllDTO> result = boardRepository.searchWithAll(types, keyword, pageable);
+
+
+        return PageResponseDTO.<BoardListAllDTO>withAll()
+                .pageRequestDTO(pageRequestDTO)
+                .dtoList(result.getContent())
+                .total((int)result.getTotalElements())
+                .build();
+    }
+
 }
