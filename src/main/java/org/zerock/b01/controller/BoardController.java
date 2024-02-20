@@ -6,6 +6,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -47,9 +48,11 @@ public class BoardController {
 
 
     //등록 View
+    //Spring Security의 특정 권한을 가진 사용자만 접근 가능하도록 지정
+    @PreAuthorize("hasRole('ROLE_USER')")
     @GetMapping("/register")
     public void registerView(){
-
+        //만약 로그인 화면 없이 바로 이동될 경우 '/logout'을 통해 로그아웃 후 다시 요청해야 한다.
     }
 
 

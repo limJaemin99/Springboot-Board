@@ -1,21 +1,37 @@
 package org.zerock.b01.config;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.zerock.b01.security.CustomUserDetailsService;
+
+import javax.sql.DataSource;
 
 @Log4j2
 @Configuration
 @RequiredArgsConstructor
+//deprecated 됨  -> @EnableMethodSecurity 사용
+//@EnableGlobalMethodSecurity(prePostEnabled = true)
+// securedEnabled => Secured 애노테이션 사용 여부, prePostEnabled => PreAuthorize 애노테이션 사용 여부
+@EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class CustomSecurityConfig {
+
+    //remember-me 기능을 사용하기 위해 쿠키를 저장할 객체 생성
+    private final DataSource dataSource;
+    private final CustomUserDetailsService userDetailsService;
+
     /*
         Spring Security의 경우 단순히 application.properties를 이용하는 설정보다
             코드를 이용해서 설정을 조정하는 경우가 더 많기 때문에 별도의 클래스를 이용해서 설정을 조정한다.
@@ -56,8 +72,39 @@ public class CustomSecurityConfig {
             Spring Security의 동작 방식은 [username만을 이용해서 사용자 정보를 로딩하고, 나중에 PW를 검증하는 방식이다.]
          */
 
-        //로그인 화면에서 로그인을 진행한다는 설정
-        http.formLogin(Customizer.withDefaults());
+
+        //Spring Security 6.1 버전 이상에서는 아래 메소드들을 람다식으로 쓰도록 권장하고 있다.
+            //http.formLogin();
+            //http.csrf().disable();
+
+        //① 로그인 화면에서 로그인을 진행한다는 설정
+        //② 로그인 화면 경로 설정 (설정하지 않아도 기본값 '/login'이 존재함)
+        http.formLogin(formLogin -> formLogin.loginPage("/member/login"));
+
+        //로그아웃
+        http.logout(logout -> logout
+                .logoutUrl("/member/logout")
+                .deleteCookies("remember-me")
+        );
+        /*
+            ● CSRF 토큰이란?
+                - 'Cross Site Request Forgery(크로스 사이트 간 요청 위조)' 의 약어로,
+                    권한이 있는 사용자가 자신도 모르게 요청을 전송하게 하는 공격 방식이다.
+                - CSRF 토큰은 사용자가 사이트를 이용할 때 매번 변경되는 문자열을 생성하고, 이를 요청시에 검증하는 방식이다.
+
+            Spring Security는 기본적으로 GET 방식을 제외한 POST/PUT/DELETE 요청에 CSRF 토큰을 요구한다.
+                따라서 아래 설정을 하지 않을 경우, 로그인 처리(POST)에서 403(Forbidden) 에러가 발생한다.
+         */
+        //CSRF 토큰 비활성화
+        http.csrf(csrf -> csrf.disable());
+
+        //remember-me 기능
+        http.rememberMe(rememberMe -> rememberMe
+                .key("12345678")
+                .tokenRepository(persistentTokenRepository())
+                .userDetailsService(userDetailsService)
+                .tokenValiditySeconds(60*60*24*30)
+        );
 
         return http.build();
     }
@@ -81,5 +128,15 @@ public class CustomSecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
+    }
+
+
+    //쿠키값을 인코딩하기 위한 key값과 필요한 정보를 저장하는 tokenRepository를 지정하는 메소드
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository(){
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+
+        return repo;
     }
 }
