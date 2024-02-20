@@ -5,8 +5,11 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Log4j2
@@ -38,6 +41,24 @@ public class CustomSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         log.info("━━━━━━━━━━━━━━━━━━━━ Configure ━━━━━━━━━━━━━━━━━━━━");
 
+        /*
+            Spring Security 전체를 관통하는 가장 중요한 개념은 인증(Authentication)과 인가(Authorization) 개념이다.
+                ● 인증 (Authentication) : '로그인' 개념
+                    - 인증을 위해 사용자는 자신이 알고 있는 정보를 제공하는데, ID 와 PW가 이에 속한다.
+                ● 인가 (Authorization) : '허가, 권한'이라는 개념
+                    - 인증이 된 사용자라고 해도 이에 접근할 수 있는 권한이 있는지를 확인하는 과정을 의미
+
+            * 인증과 username
+            Spring Security에서 로그인에 해당하는 인증 단계는 과거의 웹과 다르게 동작하는 부분이 있다.
+                - 사용자의 아이디(username)만으로 사용자의 정보를 로딩
+                    (* 주의 - 흔히 말하는 ID를 Spring Security에서는 username이라는 용어로 사용한다.)
+                - 로딩된 사용자의 정보를 이용해서 패스워드를 검증
+            Spring Security의 동작 방식은 [username만을 이용해서 사용자 정보를 로딩하고, 나중에 PW를 검증하는 방식이다.]
+         */
+
+        //로그인 화면에서 로그인을 진행한다는 설정
+        http.formLogin(Customizer.withDefaults());
+
         return http.build();
     }
 
@@ -53,5 +74,12 @@ public class CustomSecurityConfig {
         log.info("━━━━━━━━━━━━━━━━━━━━ Web Configure ━━━━━━━━━━━━━━━━━━━━");
 
         return (web) -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+    }
+
+
+    //CustomUserDetailsService가 정상적으로 동작하려면 PasswordEncoder를 주입해야 한다.
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 }
