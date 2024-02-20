@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/basic.html}">
 <head>
@@ -27,7 +28,8 @@
 
                         <div class="input-group mb-3">
                             <span class="input-group-text">Writer</span>
-                            <input type="text" name="writer" class="form-control" placeholder="Writer">
+                            <input type="text" name="writer" class="form-control" placeholder="Writer"
+                                th:value="${#authentication.principal.username}" readonly>
                         </div>
 
                         <div class="input-group mb-3">
@@ -266,6 +268,16 @@
 
         uploadMoadl.hide()
     })
+
+//Spring Security ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    //인증 정보
+    //const auth = [[${#authentication}]]
+    //현재 사용자 정보를 이용해야 한다면 principal을 이용
+    const auth = [[${#authentication.principal}]]
+
+    const errors = [[${errors}]]
+    console.log(errors)
 
 </script>
 

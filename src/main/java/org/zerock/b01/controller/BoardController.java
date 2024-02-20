@@ -48,8 +48,7 @@ public class BoardController {
 
 
     //등록 View
-    //Spring Security의 특정 권한을 가진 사용자만 접근 가능하도록 지정
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_USER')")   //Spring Security의 특정 권한을 가진 사용자만 접근 가능하도록 지정
     @GetMapping("/register")
     public void registerView(){
         //만약 로그인 화면 없이 바로 이동될 경우 '/logout'을 통해 로그아웃 후 다시 요청해야 한다.
@@ -80,6 +79,7 @@ public class BoardController {
 
 
     //특정 번호(bno)의 게시물 조회, 수정 View
+    @PreAuthorize("isAuthenticated()")  //로그인한 사용자만 게시물 조회가 가능하도록 함
     @GetMapping({"/read", "/modify"})   // {}로 묶어서 여러 경로를 적용할 수 있다.
     public void read(Long bno, PageRequestDTO pageRequestDTO, Model model){
         BoardDTO boardDTO = boardService.readOne(bno);
@@ -91,6 +91,7 @@ public class BoardController {
 
 
     //수정 Action
+    @PreAuthorize("principal.username == #boardDTO.writer") //현재 파라미터가 수집된 BoardDTO의 writer
     @PostMapping("/modify")
     public String modify(PageRequestDTO pageRequestDTO, @Valid BoardDTO boardDTO,
                          BindingResult bindingResult, RedirectAttributes redirectAttributes){
@@ -115,6 +116,7 @@ public class BoardController {
 
 
     //삭제 Action
+    @PreAuthorize("principal.username == #boardDTO.writer") //현재 파라미터가 수집된 BoardDTO의 writer
     @PostMapping("/remove")
     public String remove(BoardDTO boardDTO, RedirectAttributes redirectAttributes){
         Long bno = boardDTO.getBno();
