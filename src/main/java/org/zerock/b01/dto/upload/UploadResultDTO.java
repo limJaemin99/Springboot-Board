@@ -17,6 +17,7 @@ public class UploadResultDTO {
 
     private boolean img;
 
+
     //업로드된 파일의 UUID값과 파일 이름, 이미지 여부를 객체로 구성하고 getLink()를 통해 첨부파일 경로 처리에 사용
         // * 나중에 JSON으로 처리될 때는 link라는 속성으로 자동 처리된다.
     private String getLink(){

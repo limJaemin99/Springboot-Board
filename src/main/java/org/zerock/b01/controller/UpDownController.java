@@ -52,6 +52,7 @@ public class UpDownController {
 
                     //이미지 파일의 종류라면
                     if(Files.probeContentType(savePath).startsWith("image")){
+
                         image = true;
 
                         File thumbFile = new File(uploadPath, "s_" + uuid + "_" + originalName);
@@ -67,7 +68,6 @@ public class UpDownController {
                                 .fileName(originalName)
                                 .img(image)
                                 .build());
-
             }); //end for-each
 
             return list;

@@ -56,6 +56,12 @@
                         </div>
                     </div>
                 </div>  <!-- end card-body -->
+
+                <div class="col">
+                    <div class="card" style="align-items: center;" th:if="${dto.fileNames != null && dto.fileNames.size() > 0}">    <!-- 업로드 파일 크기 조정 -->
+                        <img class="card-img-top" style="max-width: 50%; height: auto;" th:each="fileName: ${dto.fileNames}" th:src="|/view/${fileName}|">
+                    </div>
+                </div>
             </div>  <!-- end card -->
         </div>  <!-- end col -->
     </div>  <!-- end row -->
