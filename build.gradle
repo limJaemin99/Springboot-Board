@@ -52,6 +52,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	//Thymeleaf Authentication
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+	//Social Login - OAuth2 Client
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
 
 tasks.named('test') {
