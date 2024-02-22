@@ -8,6 +8,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.ui.Model;
 import org.zerock.b01.security.dto.MemberSecurityDTO;
 
 import java.io.IOException;
@@ -17,7 +18,6 @@ import java.io.IOException;
 public class CustomSocialLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final PasswordEncoder passwordEncoder;
-
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -38,7 +38,11 @@ public class CustomSocialLoginSuccessHandler implements AuthenticationSuccessHan
             log.info("Should Change Password");
 
             log.info("Redirect to Member Modify");
-            response.sendRedirect("/member/modify");
+            request.setAttribute("mid", memberSecurityDTO.getMid());
+            request.setAttribute("email", memberSecurityDTO.getEmail());
+            request.setAttribute("message", "<<소셜 로그인입니다.>>\n비밀번호를 설정해주세요");
+            request.getRequestDispatcher("/member/modify").forward(request, response);
+            //response.sendRedirect("/member/modify");
 
             return;
         } else {    //아닌 경우 /board/list로 이동

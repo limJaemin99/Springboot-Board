@@ -73,5 +73,5 @@ public class MemberRepositoryTests {
 
         memberRepository.updatePassword(mpw, mid);
     }
-    
+
 }

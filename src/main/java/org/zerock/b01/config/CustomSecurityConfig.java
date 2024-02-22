@@ -107,7 +107,7 @@ public class CustomSecurityConfig {
                 .key("12345678")
                 .tokenRepository(persistentTokenRepository())
                 .userDetailsService(userDetailsService)
-                .tokenValiditySeconds(60*60*24*30)
+                .tokenValiditySeconds(60*60*24*30)  //30일
         );
 
         //Custom403Handler가 동작하기 위한 설정 (403, Forbidden)

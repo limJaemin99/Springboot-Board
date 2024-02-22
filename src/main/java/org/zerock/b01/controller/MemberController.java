@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.zerock.b01.dto.MemberJoinDTO;
+import org.zerock.b01.repository.MemberRepository;
 import org.zerock.b01.service.MemberService;
 
 @Log4j2
@@ -23,6 +24,8 @@ public class MemberController {
 
     //의존성 주입
     private final MemberService memberService;
+
+    private final MemberRepository memberRepository;
 
     //Remember-Me 토큰 정보 삭제를 위해 생성한 객체
     private final PersistentTokenRepository persistentTokenRepository;
@@ -72,5 +75,21 @@ public class MemberController {
         redirectAttributes.addFlashAttribute("result", "success");
 
         return "redirect:/member/login";
+    }
+
+
+    //회원 정보 수정 View
+    @GetMapping("/modify")
+    public void modifyView(){
+        log.info("modify View .....");
+    }
+
+
+    //회원 정보 수정 POST
+    @PostMapping("/modify")
+    public String modifyPOST(String mid, String mpw){
+        memberRepository.updatePassword(mpw, mid);
+        
+        return "redirect:/board/list";
     }
 }
